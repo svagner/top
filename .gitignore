@@ -1,17 +1,21 @@
-# Object files
+# Compiled Object files
+*.slo
+*.lo
 *.o
 
-# Libraries
-*.lib
+# Compiled Dynamic libraries
+*.so
+
+# Compiled Static libraries
+*.lai
+*.la
 *.a
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+# Build directory
+build
 
-# Executables
-*.exe
-*.out
-*.app
+# bak files
+*~
+
+# tags exctags
+tags
