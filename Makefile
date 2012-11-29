@@ -1,6 +1,7 @@
 # $FreeBSD: stable/9/usr.bin/top/Makefile 201386 2010-01-02 10:27:05Z ed $
 
 TOPDIR=	/usr/src/contrib/top
+
 .PATH: ${TOPDIR}
 
 PROG=	top
