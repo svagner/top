@@ -120,7 +120,7 @@ static char io_header[] =
     "  PID%s %-*.*s   VCSW  IVCSW   READ  WRITE  FAULT  TOTAL PERCENT COMMAND";
 
 #define io_Proc_format \
-    "%5d%s %-*.*s %6ld %6ld %6ld %6ld %6ld %6ld %6.2f%% %6ld %.*s"
+    "%5d%s %-*.*s %6ld %6ld %6ld %6ld %6ld %6ld %6.2f%% %.*s"
 
 static char smp_header_thr[] =
     "  PID%s %-*.*s  THR PRI NICE   SIZE    RES   SWSZ STATE   C   TIME %6s  TSWAP COMMAND";
@@ -817,7 +817,7 @@ getpagerstatus(const struct kinfo_proc *proc)
 	vm_page_t m;
 	unsigned long addr;
 	struct sbuf *sb;
-	int ret;
+	int ret, error;
 
 	char errstr[1000];
 	bzero(errstr, sizeof(errstr));
@@ -842,8 +842,16 @@ getpagerstatus(const struct kinfo_proc *proc)
 		for (; objp; objp = object.backing_object) 
 			kmem_read(objp, &object, sizeof(object));
 		if ( object.paging_in_progress == 1 )
+		{
+			error = kvm_close(kmem);
+			if (error != 0)
+				perror("kvm_close()");
 			return 1;
+		}
 	}
+	error = kvm_close(kmem);
+	if (error != 0)
+		perror("kvm_close()");
 	return 0;
 }
 
