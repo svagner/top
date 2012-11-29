@@ -1,4 +1,4 @@
 top
 ===
 
-FreeBSD system top - extended
+FreeBSD 9.1 system top - extended
