@@ -35,6 +35,12 @@
 #include <sys/user.h>
 #include <sys/vmmeter.h>
 
+#include <vm/vm.h>
+#include <vm/vm_map.h>
+#include <vm/vm_object.h>
+#include <machine/vmparam.h>
+
+#include <assert.h>
 #include <err.h>
 #include <kvm.h>
 #include <math.h>
@@ -61,6 +67,7 @@
 extern struct process_select ps;
 extern char* printable(char *);
 static int smpmode;
+static kvm_t *kmem;
 enum displaymodes displaymode;
 #ifdef TOP_USERNAME_LEN
 static int namelength = TOP_USERNAME_LEN;
@@ -78,6 +85,15 @@ struct handle {
 	struct kinfo_proc **next_proc;	/* points to next valid proc pointer */
 	int remaining;			/* number of pointers remaining */
 };
+
+static void
+kmem_read(void *kaddr, void *uaddr, size_t size)
+{
+    int ret;
+
+    ret = kvm_read(kmem, (u_long) kaddr, uaddr, size);
+    assert(ret == size && ("kvm_read() problem"));
+}
 
 /* declarations for load_avg */
 #include "loadavg.h"
@@ -786,6 +802,51 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	return ((caddr_t)&handle);
 }
 
+static int
+getpagerstatus(const struct kinfo_proc *proc)
+{
+	struct vm_map_entry entry;
+	struct vm_object object;
+	struct vmspace vm;
+	struct proc *p;
+	struct swdevt *devidx;
+	kvm_t *kd;
+	vm_map_entry_t entryp;
+	vm_map_t map;
+	vm_object_t objp;
+	vm_page_t m;
+	unsigned long addr;
+	struct sbuf *sb;
+	int ret;
+
+	char errstr[1000];
+	bzero(errstr, sizeof(errstr));
+
+	kmem = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errstr);
+	    if (kmem == NULL)
+		perror("kvm_openfiles()");
+	//assert(proc != NULL && kmem != NULL);
+	addr = (unsigned long)proc->ki_vmspace;
+	ret = kvm_read(kmem, addr, &vm, sizeof(vm));
+	assert(ret == sizeof(vm));
+	map = &(vm.vm_map);
+	for (entryp = map->header.next; entryp != &(proc->ki_vmspace->vm_map.header); entryp = entry.next)
+	{
+		kmem_read(entryp, &entry, sizeof(entry));
+		if (entry.eflags & MAP_ENTRY_IS_SUB_MAP)
+			continue;
+		if ((objp = entry.object.vm_object) == NULL)
+			continue;
+
+		kmem_read(entryp, &entry, sizeof(entry));
+		for (; objp; objp = object.backing_object) 
+			kmem_read(objp, &object, sizeof(object));
+		if ( object.paging_in_progress == 1 )
+			return 1;
+	}
+	return 0;
+}
+
 static char fmt[158];	/* static area where result is built */
 
 char *
@@ -797,7 +858,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 	double pct;
 	struct handle *hp;
 	char status[16];
-	int state;
+	int state, pstate;
 	struct rusage ru, *rup;
 	long p_tot, s_tot;
 	char *proc_fmt, thr_buf[6], jid_buf[6];
@@ -809,6 +870,8 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 	pp = *(hp->next_proc++);
 	hp->remaining--;
 
+	/* get paging status */
+	pstate = getpagerstatus(pp);
 	/* get the process's command name */
 	if ((pp->ki_flag & P_INMEM) == 0) {
 		/*
@@ -824,6 +887,20 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 		pp->ki_comm[len + 1] = '>';
 		pp->ki_comm[len + 2] = '\0';
 	}
+	if (pstate) {
+		/*
+		 * Print paging processes as +pname
+		 */
+		size_t len;
+
+		len = strlen(pp->ki_comm);
+		if (len > sizeof(pp->ki_comm) - 2)
+			len = sizeof(pp->ki_comm) - 2;
+		memmove(pp->ki_comm + 1, pp->ki_comm, len);
+		pp->ki_comm[0] = '+';
+		pp->ki_comm[len + 2] = '\0';
+	}
+
 
 	/*
 	 * Convert the process's runtime from microseconds to seconds.  This
@@ -905,7 +982,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 			argbuflen = cmdlengthdelta * 4;
 			argbuf = (char *)malloc(argbuflen + 1);
 			if (argbuf == NULL) {
-				warn("malloc(%d)", argbuflen + 1);
+				warn("malloc(%ld)", argbuflen + 1);
 				free(cmdbuf);
 				return NULL;
 			}
@@ -1007,6 +1084,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 		snprintf(thr_buf, sizeof(thr_buf), "%*d ",
 		    sizeof(thr_buf) - 2, pp->ki_numthreads);
 
+
 	snprintf(fmt, sizeof(fmt), proc_fmt,
 	    pp->ki_pid,
 	    jid_buf,
@@ -1030,6 +1108,8 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 	/* return the result */
 	return (fmt);
 }
+
+
 
 static void
 getsysctl(const char *name, void *ptr, size_t len)

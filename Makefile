@@ -25,7 +25,7 @@ DPADD=	${LIBTERMCAP} ${LIBM} ${LIBKVM}
 LDADD=	-ltermcap -lm -lkvm
 
 CLEANFILES= sigdesc.h
-SIGCONV_AWK= ${.CURDIR}/../../contrib/top/sigconv.awk
+SIGCONV_AWK= /usr/src/contrib/top/sigconv.awk
 SIGNAL_H= ${DESTDIR}/usr/include/sys/signal.h
 sigdesc.h: ${SIGCONV_AWK} ${SIGNAL_H}
 	awk -f ${SIGCONV_AWK} < ${SIGNAL_H} > ${.TARGET}
