@@ -192,11 +192,13 @@ char *memorynames[] = {
 	"K Free", NULL
 };
 
+#if (defined(BSD) && (__FreeBSD_version >= 900000))			
 int arc_stats[7];
 char *arcnames[] = {
 	"K Total, ", "K MRU, ", "K MFU, ", "K Anon, ", "K Header, ", "K Other",
 	NULL
 };
+#endif
 
 int swap_stats[7];
 char *swapnames[] = {
@@ -216,7 +218,9 @@ static struct kinfo_proc *previous_procs;
 static struct kinfo_proc **previous_pref;
 static int previous_proc_count = 0;
 static int previous_proc_count_max = 0;
+#if (defined(BSD) && (__FreeBSD_version >= 900000))			
 static int arc_enabled;
+#endif
 
 /* total number of io operations */
 static long total_inblock;
@@ -264,7 +268,9 @@ static int compare_tid(const void *a, const void *b);
 static const char *format_nice(const struct kinfo_proc *pp);
 static void getsysctl(const char *name, void *ptr, size_t len);
 static int swapmode(int *retavail, int *retfree);
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 static void update_layout(void);
+#endif
 
 void
 toggle_pcpustats(void)
@@ -272,6 +278,7 @@ toggle_pcpustats(void)
 
 	if (ncpus == 1)
 		return;
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	update_layout();
 }
 
@@ -289,15 +296,28 @@ update_layout(void)
 	y_procs = 7 + arc_enabled;
 	Header_lines = 7 + arc_enabled;
 
+#endif
 	if (pcpu_stats) {
 		y_mem += ncpus - 1;
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 		y_arc += ncpus - 1;
+#endif
 		y_swap += ncpus - 1;
 		y_idlecursor += ncpus - 1;
 		y_message += ncpus - 1;
 		y_header += ncpus - 1;
 		y_procs += ncpus - 1;
 		Header_lines += ncpus - 1;
+#if (defined(BSD) && (800000 <= __FreeBSD_version < 900000))
+	} else {
+		y_mem = 3;
+		y_swap = 4;
+		y_idlecursor = 5;
+		y_message = 5;
+		y_header = 6;
+		y_procs = 7;
+		Header_lines = 7;
+#endif
 	}
 }
 
@@ -305,7 +325,9 @@ int
 machine_init(struct statics *statics, char do_unames)
 {
 	int i, j, empty, pagesize;
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	uint64_t arc_size;
+#endif
 	size_t size;
 	struct passwd *pw;
 
@@ -317,10 +339,12 @@ machine_init(struct statics *statics, char do_unames)
 	    size != sizeof(smpmode))
 		smpmode = 0;
 
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	size = sizeof(arc_size);
 	if (sysctlbyname("kstat.zfs.misc.arcstats.size", &arc_size, &size,
 	    NULL, 0) == 0 && arc_size != 0)
 		arc_enabled = 1;
+#endif
 
 	if (do_unames) {
 	    while ((pw = getpwent()) != NULL) {
@@ -362,10 +386,12 @@ machine_init(struct statics *statics, char do_unames)
 	statics->procstate_names = procstatenames;
 	statics->cpustate_names = cpustatenames;
 	statics->memory_names = memorynames;
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	if (arc_enabled)
 		statics->arc_names = arcnames;
 	else
 		statics->arc_names = NULL;
+#endif
 	statics->swap_names = swapnames;
 #ifdef ORDER
 	statics->order_names = ordernames;
@@ -400,7 +426,12 @@ machine_init(struct statics *statics, char do_unames)
 	pcpu_cpu_states = calloc(1, size);
 	statics->ncpus = ncpus;
 
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	update_layout();
+#else
+	if (pcpu_stats)
+	    toggle_pcpustats();
+#endif
 
 	/* all done! */
 	return (0);
@@ -451,7 +482,11 @@ get_system_info(struct system_info *si)
 	struct loadavg sysload;
 	int mib[2];
 	struct timeval boottime;
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	uint64_t arc_stat, arc_stat2;
+#else
+	size_t bt_size;
+#endif
 	int i, j;
 	size_t size;
 
@@ -530,6 +565,7 @@ get_system_info(struct system_info *si)
 		swap_stats[6] = -1;
 	}
 
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	if (arc_enabled) {
 		GETSYSCTL("kstat.zfs.misc.arcstats.size", arc_stat);
 		arc_stats[0] = arc_stat >> 10;
@@ -546,6 +582,7 @@ get_system_info(struct system_info *si)
 		arc_stats[5] = arc_stat >> 10;
 		si->arc = arc_stats;
 	}
+#endif
 		    
 	/* set arrays and strings */
 	if (pcpu_stats) {
@@ -571,8 +608,13 @@ get_system_info(struct system_info *si)
 	 */
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 	size = sizeof(boottime);
 	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1 &&
+#else
+	bt_size = sizeof(boottime);
+	if (sysctl(mib, 2, &boottime, &bt_size, NULL, 0) != -
+#endif
 	    boottime.tv_sec != 0) {
 		si->boottime = boottime;
 	} else {
