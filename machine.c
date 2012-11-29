@@ -258,7 +258,9 @@ static int *pcpu_cpu_states;
 
 static int compare_jid(const void *a, const void *b);
 static int compare_pid(const void *a, const void *b);
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 static int compare_tid(const void *a, const void *b);
+#endif
 static const char *format_nice(const struct kinfo_proc *pp);
 static void getsysctl(const char *name, void *ptr, size_t len);
 static int swapmode(int *retavail, int *retfree);
@@ -614,7 +616,11 @@ get_old_proc(struct kinfo_proc *pp)
 	 * cache it.
 	 */
 	oldpp = bsearch(&pp, previous_pref, previous_proc_count,
+#if (defined(BSD) && (__FreeBSD_version >= 900000))			
 	    sizeof(*previous_pref), ps.thread ? compare_tid : compare_pid);
+#else
+	    sizeof(*previous_pref), compare_pid);
+#endif
 	if (oldpp == NULL) {
 		pp->ki_udata = NOPROC;
 		return (NULL);
@@ -709,7 +715,11 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			previous_pref[i] = &previous_procs[i];
 		bcopy(pbase, previous_procs, nproc * sizeof(*previous_procs));
 		qsort(previous_pref, nproc, sizeof(*previous_pref),
+#if (defined(BSD) && (__FreeBSD_version >= 900000))				
 		    ps.thread ? compare_tid : compare_pid);
+#else
+		    compare_pid);
+#endif
 	}
 	previous_proc_count = nproc;
 
@@ -962,9 +972,17 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 
 	if (!(flags & FMT_SHOWARGS)) {
 		if (ps.thread && pp->ki_flag & P_HADTHREADS &&
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 		    pp->ki_tdname[0]) {
+#else
+		    pp->ki_ocomm[0]) {	
+#endif
 			snprintf(cmdbuf, cmdlengthdelta, "%s{%s}", pp->ki_comm,
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 			    pp->ki_tdname);
+#else
+			    pp->ki_ocomm);	
+#endif
 		} else {
 			snprintf(cmdbuf, cmdlengthdelta, "%s", pp->ki_comm);
 		}
@@ -974,9 +992,17 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 		    (args = kvm_getargv(kd, pp, cmdlengthdelta)) == NULL ||
 		    !(*args)) {
 			if (ps.thread && pp->ki_flag & P_HADTHREADS &&
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 		    	    pp->ki_tdname[0]) {
+#else
+			    pp->ki_ocomm[0]) {
+#endif
 				snprintf(cmdbuf, cmdlengthdelta,
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 				    "[%s{%s}]", pp->ki_comm, pp->ki_tdname);
+#else
+				    "[%s{%s}]", pp->ki_comm, pp->ki_ocomm);
+#endif
 			} else {
 				snprintf(cmdbuf, cmdlengthdelta,
 				    "[%s]", pp->ki_comm);
@@ -1022,18 +1048,34 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 
 			if (strcmp(cmd, pp->ki_comm) != 0 ) {
 				if (ps.thread && pp->ki_flag & P_HADTHREADS &&
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 				    pp->ki_tdname[0])
+#else
+				    pp->ki_ocomm[0])	
+#endif
 					snprintf(cmdbuf, cmdlengthdelta,
 					    "%s (%s){%s}", argbuf, pp->ki_comm,
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 					    pp->ki_tdname);
+#else
+					    pp->ki_ocomm);	
+#endif
 				else
 					snprintf(cmdbuf, cmdlengthdelta,
 					    "%s (%s)", argbuf, pp->ki_comm);
 			} else {
 				if (ps.thread && pp->ki_flag & P_HADTHREADS &&
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 				    pp->ki_tdname[0])
+#else
+				    pp->ki_ocomm[0])	
+#endif
 					snprintf(cmdbuf, cmdlengthdelta,
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 					    "%s{%s}", argbuf, pp->ki_tdname);
+#else
+					    "%s{%s}", argbuf, pp->ki_ocomm);
+#endif
 				else
 					strlcpy(cmdbuf, argbuf, cmdlengthdelta);
 			}
@@ -1206,6 +1248,7 @@ compare_pid(const void *p1, const void *p2)
 	return ((*pp1)->ki_pid - (*pp2)->ki_pid);
 }
 
+#if (defined(BSD) && (__FreeBSD_version >= 900000))
 static int
 compare_tid(const void *p1, const void *p2)
 {
@@ -1217,6 +1260,7 @@ compare_tid(const void *p1, const void *p2)
 
 	return ((*pp1)->ki_tid - (*pp2)->ki_tid);
 }
+#endif
 
 /*
  *  proc_compare - comparison function for "qsort"
