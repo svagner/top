@@ -48,6 +48,7 @@ char *copyright =
 #include "boolean.h"
 #include "machine.h"
 #include "utils.h"
+#include "stdarg.h"
 
 /* Size of the stdio buffer given to stdout */
 #define Buffersize	2048
@@ -144,10 +145,10 @@ int (*d_message)() = i_message;
 int (*d_header)() = i_header;
 int (*d_process)() = i_process;
 
-int cprintf(const char * font, const char * __restrict, args);
+int cprintf(const char * font, const char * __restrict, va_list args);
 
 int
-cprintf(const char * font, const char * __restrict __format, args) {
+cprintf(const char * font, const char * __restrict __format, va_list args) {
     int return_status, i;
 
     size_t len;
