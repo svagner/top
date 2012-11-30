@@ -59,3 +59,4 @@ extern int pcpu_stats;
 #define BLACK_END_BLUE	    "\033[0;36m"
 #define RED_END_BLUE	    "\033[7;31m"
 #define RESET_COLOR	    "\033[m"
+#define LIGHTBLUE_END_BLACK "\033[7;36m"

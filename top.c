@@ -145,12 +145,12 @@ int (*d_message)() = i_message;
 int (*d_header)() = i_header;
 int (*d_process)() = i_process;
 
-int cprintf(const char * font, const char * __restrict, va_list args);
+int cprintf(const char * font, const char * __restrict, ...);
 
 int
-cprintf(const char * font, const char * __restrict __format, va_list args) {
+cprintf(const char * font, const char * __restrict __format, ...) {
     int return_status, i;
-
+    va_list args;
     size_t len;
     int formatsize, linesize, lenghtclr;
     lenghtclr = sizeof(font);
@@ -181,11 +181,15 @@ cprintf(const char * font, const char * __restrict __format, va_list args) {
 	}
     strcat(frm,clrcl);
     writelog(frm, LOGNAME);
-    return_status = printf( frm, args );
-    //reset_display();
+    va_start(args, frm);
+    return_status = vprintf( frm, args );
+    va_end(args);
+//    reset_display();
     return return_status;
     }
-    return_status = printf( frm, args );
+    va_start(args, frm);
+    return_status = vprintf( frm, args );
+    va_end(args);
     //reset_display();
     return return_status;
     }

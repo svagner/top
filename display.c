@@ -256,20 +256,14 @@ double *avenrun;
     if (mpid != -1)
     {
 	cprintf(BLACK_END_BLUE, "last pid:");
-	//printf("last pid:");
 	cprintf(BLACK_END_LIGHTBLUE," %5d; ", mpid);
-	//printf(" %5d;  ", mpid);
     }
 
         cprintf(BLACK_END_BLUE, "load averages");
-        //printf("load averages");
 
 
     for (i = 0; i < 3; i++)
     {
-	//printf("%c %5.2f",
-	//   i == 0 ? ':' : ',',
-	//    avenrun[i]);
 	cprintf(BLACK_END_BLUE, "%c",
 	    i == 0 ? ':' : ',');
 	cprintf(BLACK_END_LIGHTBLUE, " %5.2f",
@@ -296,7 +290,6 @@ double *avenrun;
 	    cprintf(BLACK_END_LIGHTBLUE, "%5d", mpid);
 
 
-	    //printf("%5d", mpid);
 	    lmpid = mpid;
 	}
 
@@ -315,12 +308,8 @@ double *avenrun;
     /* we should optimize this and only display changes */
     for (i = 0; i < 3; i++)
     {
-	printf("%s%5.2f",
-	    i == 0 ? "" : ", ",
-	    avenrun[i]);
-	//cprintf(BLACK_END_LIGHTBLUE, "%s %5.2f",
-	//    i == 0 ? "" : ", ",		
-	//    avenrun[i]);
+	cprintf(BLACK_END_BLUE, "%s", i == 0 ? "" : ", ");
+	cprintf(BLACK_END_LIGHTBLUE, "%5.2f", avenrun[i]);
     }
 }
 
@@ -378,8 +367,6 @@ int *brkdn;
     register int i;
 
     /* write current number of processes and remember the value */
-    //printf("%d processes:", total);
-    //printf("%d process", total);
     cprintf(BLACK_END_LIGHTBLUE, "%d ", total);
     cprintf(BLACK_END_BLUE, "processes:");
 
@@ -394,7 +381,8 @@ int *brkdn;
 
     /* format and print the process state summary */
     summary_format(procstates_buffer, brkdn, procstate_names);
-    fputs(procstates_buffer, stdout);
+    //fputs(procstates_buffer, stdout);
+    cprintf(BLACK_END_BLUE, "%s", procstates_buffer);
 
     /* save the numbers for next time */
     memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
@@ -419,7 +407,6 @@ int *brkdn;
 	/* cursor is already there...no motion needed */
 	/* assert(lastline == 1); */
 #endif
-	//printf("%d", total);
 	cprintf(BLACK_END_LIGHTBLUE, "%d", total);
 
 	/* if number of digits differs, rewrite the label */
@@ -445,7 +432,7 @@ int *brkdn;
     {
 	/* format and update the line */
 	summary_format(new, brkdn, procstate_names);
-	line_update(procstates_buffer, new, x_brkdn, y_brkdn);
+	line_update(procstates_buffer, new, x_brkdn, y_brkdn, BLACK_END_LIGHTBLUE, 1);
 	memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
     }
 }
@@ -500,7 +487,7 @@ for (cpu = 0; cpu < num_cpus; cpu++) {
 
     /* print tag and bump lastline */
     if (num_cpus == 1)
-	printf("\nCPU: ");
+	cprintf(BLACK_END_BLUE,"\nCPU: ");
     else {
 	value = printf("\nCPU %d: ", cpu);
 	while (value++ <= cpustates_column)
@@ -517,10 +504,10 @@ for (cpu = 0; cpu < num_cpus; cpu++) {
 	    value = *states++;
 
 	    /* if percentage is >= 1000, print it as 100% */
-	    printf((value >= 1000 ? "%s%4.0f%% %s" : "%s%4.1f%% %s"),
-		   (i++ % num_cpustates) == 0 ? "" : ", ",
-		   ((float)value)/10.,
-		   thisname);
+	    cprintf(BLACK_END_LIGHTBLUE,"%s",(i++ % num_cpustates) == 0 ? "" : ", ");
+	    cprintf(BLACK_END_LIGHTBLUE,"%4.1f%%",
+		   ((float)value)/10.);
+	    cprintf(BLACK_END_BLUE," %s",thisname);
 	}
     }
 }
@@ -565,7 +552,7 @@ for (cpu = 0; cpu < num_cpus; cpu++) {
 		value = *states;
 
 		/* if percentage is >= 1000, print it as 100% */
-		printf((value >= 1000 ? "%4.0f" : "%4.1f"),
+		cprintf(BLACK_END_LIGHTBLUE, (value >= 1000 ? "%4.0f" : "%4.1f"),
 		       ((double)value)/10.);
 
 		/* remember it for next time */
@@ -595,7 +582,7 @@ for (cpu = 0; cpu < num_cpus; cpu++) {
 
     /* show tag and bump lastline */
     if (num_cpus == 1)
-	printf("\nCPU: ");
+	cprintf(BLACK_END_BLUE, "\nCPU: ");
     else {
 	value = printf("\nCPU %d: ", cpu);
 	while (value++ <= cpustates_column)
@@ -635,12 +622,14 @@ i_memory(stats)
 int *stats;
 
 {
-    fputs("\nMem: ", stdout);
+    //fputs("\nMem: ", stdout);
+    cprintf(BLACK_END_BLUE, "\nMem: ");
     lastline++;
 
     /* format and print the memory summary */
     summary_format(memory_buffer, stats, memory_names);
-    fputs(memory_buffer, stdout);
+    //fputs(memory_buffer, stdout);
+    cprintf(BLACK_END_LIGHTBLUE, "%s", memory_buffer);
 }
 
 u_memory(stats)
@@ -652,7 +641,7 @@ int *stats;
 
     /* format the new line */
     summary_format(new, stats, memory_names);
-    line_update(memory_buffer, new, x_mem, y_mem);
+    line_update(memory_buffer, new, x_mem, y_mem, BLACK_END_LIGHTBLUE, 1);
 }
 
 /*
@@ -709,12 +698,14 @@ i_swap(stats)
 int *stats;
 
 {
-    fputs("\nSwap: ", stdout);
+    //fputs("\nSwap: ", stdout);
+    cprintf(BLACK_END_BLUE, "\nSwap: ");
     lastline++;
 
     /* format and print the swap summary */
     summary_format(swap_buffer, stats, swap_names);
-    fputs(swap_buffer, stdout);
+    //fputs(swap_buffer, stdout);
+    cprintf(BLACK_END_LIGHTRED, "%s", swap_buffer);
 }
 
 u_swap(stats)
@@ -824,7 +815,8 @@ char *text;
     if (header_status == ON)
     {
 	putchar('\n');
-	fputs(text, stdout);
+	//fputs(text, stdout);
+	cprintf(LIGHTBLUE_END_BLACK, "%s", text);
 	lastline++;
     }
     else if (header_status == ERASE)
@@ -920,6 +912,7 @@ char *newline;
 
 	/* now write the line */
 	fputs(newline, stdout);
+//	cprintf(RED_END_BLUE, "%s", newline);
 
 	/* copy it in to the buffer */
 	optr = strecpy(bufferline, newline);
@@ -929,7 +922,7 @@ char *newline;
     }
     else
     {
-	line_update(bufferline, newline, 0, line + Header_lines);
+	line_update(bufferline, newline, 0, line + Header_lines, "", 0);
     }
 }
 
@@ -1213,12 +1206,16 @@ register char **names;
     }
 }
 
-static void line_update(old, new, start, line)
+static void line_update(old, new, start, line, txtcolor, is_header)
 
 register char *old;
 register char *new;
+const char txtcolor[100];
 int start;
 int line;
+int is_header;
+
+
 
 {
     register int ch;
@@ -1227,6 +1224,9 @@ int line;
     register int lastcol = start;
     char cursor_on_line = No;
     char *current;
+
+//if ( !strncmp(txtcolor, "\033", 1))
+  //  bzero(txtcolor, sizeof(txtcolor));
 
     /* compare the two strings and only rewrite what has changed */
     current = old;
@@ -1251,7 +1251,13 @@ int line;
 	    Move_to(start, line);
 	}
 	cursor_on_line = Yes;
-	putchar(ch);
+	//putchar(ch);
+	if (strlen(txtcolor)>1)
+	{
+	    cprintf(txtcolor, "%c", ch);
+	}
+	else
+	    putchar(ch);
 	*old = ch;
 	lastcol = 1;
     }
@@ -1307,7 +1313,12 @@ int line;
 	    else
 	    {
 		/* write the new character */
-		putchar(ch);
+		    if (strlen(txtcolor)>3 && is_header==1)//strncmp(txtcolor, "\033[", 2)==1 && is_header==1)
+		    {
+			    cprintf(txtcolor, "%c", ch);
+		    }
+		    else
+			    putchar(ch);
 	    }
 	    /* put the new character in the screen buffer */
 	    *old = ch;

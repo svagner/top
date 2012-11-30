@@ -123,12 +123,12 @@ static char io_header[] =
     "%5d%s %-*.*s %6ld %6ld %6ld %6ld %6ld %6ld %6.2f%% %.*s"
 
 static char smp_header_thr[] =
-    "  PID%s %-*.*s  THR PRI NICE   SIZE    RES   SWSZ STATE   C   TIME %6s    TSWAP COMMAND";
+    "  PID%s %-*.*s  THR PRI NICE   SIZE    RES   SWSZ STATE   C   TIME %6s   TSWAP COMMAND";
 static char smp_header[] =
-    "  PID%s %-*.*s "   "PRI NICE   SIZE    RES   SWSZ STATE   C   TIME %6s    TSWAP COMMAND";
+    "  PID%s %-*.*s "   "PRI NICE   SIZE    RES   SWSZ STATE   C   TIME %6s   TSWAP COMMAND";
 
 #define smp_Proc_format \
-    "%5d%s %-*.*s %s%3d %4s%7s %6s %6s %-6.6s %2d%7s %5.2f%%   %6u %.*s"
+    "%5d%s %-*.*s %s%3d %4s%7s %6s %6s %-6.6s %2d%7s %5.2f%%  %6u %.*s"
 
 static char up_header_thr[] =
     "  PID%s %-*.*s  THR PRI NICE   SIZE    RES STATE    TIME %6s   TSWAP COMMAND";
