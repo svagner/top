@@ -19,7 +19,7 @@ WARNS?=	0
 # is 20011; use /etc/make.conf to override this.
 #
 .if defined(TOP_TABLE_SIZE)
-CFLAGS+= -D"Table_size=${TOP_TABLE_SIZE}"
+CFLAGS+= -D"Table_size=${TOP_TABLE_SIZE}" -ggdb
 .endif
 
 DPADD=	${LIBTERMCAP} ${LIBM} ${LIBKVM}

@@ -264,16 +264,18 @@ double *avenrun;
         cprintf(BLACK_END_BLUE, "load averages");
         //printf("load averages");
 
+
     for (i = 0; i < 3; i++)
     {
-//	printf("%c %5.2f",
-//	   i == 0 ? ':' : ',',
-//	    avenrun[i]);
-	cprintf(BLACK_END_BLUE, "%c ",
+	//printf("%c %5.2f",
+	//   i == 0 ? ':' : ',',
+	//    avenrun[i]);
+	cprintf(BLACK_END_BLUE, "%c",
 	    i == 0 ? ':' : ',');
-	cprintf(BLACK_END_LIGHTBLUE, "%5.2f",
+	cprintf(BLACK_END_LIGHTBLUE, " %5.2f",
 	    avenrun[i]);
     }
+
     lmpid = mpid;
 }
 
@@ -292,6 +294,8 @@ double *avenrun;
 	{
 	    Move_to(x_lastpid, y_lastpid);
 	    cprintf(BLACK_END_LIGHTBLUE, "%5d", mpid);
+
+
 	    //printf("%5d", mpid);
 	    lmpid = mpid;
 	}
@@ -314,6 +318,9 @@ double *avenrun;
 	printf("%s%5.2f",
 	    i == 0 ? "" : ", ",
 	    avenrun[i]);
+	//cprintf(BLACK_END_LIGHTBLUE, "%s %5.2f",
+	//    i == 0 ? "" : ", ",		
+	//    avenrun[i]);
     }
 }
 
@@ -372,9 +379,10 @@ int *brkdn;
 
     /* write current number of processes and remember the value */
     //printf("%d processes:", total);
+    //printf("%d process", total);
     cprintf(BLACK_END_LIGHTBLUE, "%d ", total);
     cprintf(BLACK_END_BLUE, "processes:");
-    cprintf(RESET_COLOR, "");
+
     ltotal = total;
 
     /* put out enough spaces to get to column 15 */
@@ -411,7 +419,8 @@ int *brkdn;
 	/* cursor is already there...no motion needed */
 	/* assert(lastline == 1); */
 #endif
-	printf("%d", total);
+	//printf("%d", total);
+	cprintf(BLACK_END_LIGHTBLUE, "%d", total);
 
 	/* if number of digits differs, rewrite the label */
 	if (digits(total) != digits(ltotal))
@@ -1383,4 +1392,19 @@ time_t *tod;
 	}
 	printf(" up %d+%02d:%02d:%02d", days, hrs, mins, secs);
     }
+}
+
+void
+writelog (char * str, char * fname)
+{
+	FILE * file;
+	file = fopen(fname, "a");
+	if (file == NULL)
+	{
+		file = fopen(fname, "w");
+		if (file == NULL)
+			perror("Log open");
+	}
+	fputs(str, file);
+	fclose(file);
 }

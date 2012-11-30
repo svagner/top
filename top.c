@@ -178,18 +178,14 @@ cprintf(const char * font, const char * __restrict __format, args) {
 	    
 	    frm[i] = clr[i];
 	}
-	linesize=sizeof(__format)+sizeof(clr)+sizeof(clrcl);
-	for (i=0; i<(sizeof(clrcl)-1); i++)
-	{
-	    frm[linesize+i]=clrcl[i];
-	}
+    strcat(frm,clrcl);
+    writelog(frm, LOGNAME);
     return_status = printf( frm, args );
-    //printf("%s", clrcl);
-    reset_display();
+    //reset_display();
     return return_status;
     }
     return_status = printf( frm, args );
-    reset_display();
+    //reset_display();
     return return_status;
     }
 
