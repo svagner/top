@@ -935,13 +935,36 @@ format_next_process(caddr_t handle, char *(*get_userid)(int), int flags)
 		 * Print paging processes as +pname
 		 */
 		size_t len;
+		char colorl[100];
+		register int clr_s, i;
 
 		len = strlen(pp->ki_comm);
-		if (len > sizeof(pp->ki_comm) - 2)
-			len = sizeof(pp->ki_comm) - 2;
-		memmove(pp->ki_comm + 1, pp->ki_comm, len);
-		pp->ki_comm[0] = '+';
-		pp->ki_comm[len + 2] = '\0';
+		bzero(colorl, sizeof(colorl));
+		if (color==9)
+		{
+			if (len > sizeof(pp->ki_comm) - 5)
+				len = sizeof(pp->ki_comm) - 5;
+			strcpy(colorl, RED_END_BLUE);
+			clr_s = strlen(colorl);
+			memmove(pp->ki_comm + clr_s, pp->ki_comm, len);
+			for (i=0; i<(clr_s-1); i++)
+			{
+			    pp->ki_comm[i] = colorl[i];
+			}
+			pp->ki_comm[clr_s+1] = '+';
+			pp->ki_comm[len + 1] = '\033';
+			pp->ki_comm[len + 2] = '[';
+			pp->ki_comm[len + 3] = 'm';
+			pp->ki_comm[len + 1] = '\0';
+		}
+		else
+		{
+			if (len > sizeof(pp->ki_comm) - 2)
+				len = sizeof(pp->ki_comm) - 2;
+			memmove(pp->ki_comm + 1, pp->ki_comm, len);
+			pp->ki_comm[0] = '+';
+			pp->ki_comm[len + 2] = '\0';
+		}
 	}
 
 

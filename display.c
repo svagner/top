@@ -717,7 +717,7 @@ int *stats;
 
     /* format the new line */
     summary_format(new, stats, swap_names);
-    line_update(swap_buffer, new, x_swap, y_swap);
+    line_update(swap_buffer, new, x_swap, y_swap, BLACK_END_LIGHTRED, 1);
 }
 
 /*
@@ -912,7 +912,7 @@ char *newline;
 
 	/* now write the line */
 	fputs(newline, stdout);
-//	cprintf(RED_END_BLUE, "%s", newline);
+	//cprintf(RED_END_BLUE, "%s", newline);
 
 	/* copy it in to the buffer */
 	optr = strecpy(bufferline, newline);
